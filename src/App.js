@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import './App.css';
 
 export default function App() {
-  // Estado inicial con las imágenes base y su contador de likes
   const [imagenes, setImagenes] = useState([
     { id: 1, nombre: 'Argentina', url: `${process.env.PUBLIC_URL}/imagenes/argentina.png`, likes: 0 },
     { id: 2, nombre: 'Brasil', url: `${process.env.PUBLIC_URL}/imagenes/brasil.png`, likes: 0 },
@@ -17,7 +16,6 @@ export default function App() {
   const [indiceActual, setIndiceActual] = useState(0);
   const [modalAbierto, setModalAbierto] = useState(false);
 
-  // Navegación
   const siguiente = () => {
     if (indiceActual < imagenes.length - 1) {
       setIndiceActual(indiceActual + 1);
@@ -30,37 +28,32 @@ export default function App() {
     }
   };
 
-  // 1. Eliminar imagen actual
   const eliminarImagen = () => {
     if (imagenes.length === 0) return;
-
-    const nuevasImagenes = imagenes.filter((_, index) => index !== indiceActual);
-    setImagenes(nuevasImagenes);
-
-    // Ajustar el índice si eliminamos la última disponible
-    if (indiceActual >= nuevasImagenes.length && nuevasImagenes.length > 0) {
-      setIndiceActual(nuevasImagenes.length - 1);
+    const nuevas = imagenes.filter((_, index) => index !== indiceActual);
+    setImagenes(nuevas);
+    if (indiceActual >= nuevas.length && nuevas.length > 0) {
+      setIndiceActual(nuevas.length - 1);
     }
   };
 
-  // 2. Subir nueva imagen desde el equipo
   const subirImagen = (e) => {
     const archivo = e.target.files[0];
     if (!archivo) return;
 
     const nuevaImagen = {
       id: Date.now(),
-      nombre: archivo.name.split('.')[0],
+      nombre: archivo.name.replace(/\.[^/.]+$/, ""),
       url: URL.createObjectURL(archivo),
       likes: 0
     };
 
-    setImagenes([...imagenes, nuevaImagen]);
-    setIndiceActual(imagenes.length); // Mover el visor a la imagen recién subida
-    e.target.value = null; // Reiniciar input
+    const actualizadas = [...imagenes, nuevaImagen];
+    setImagenes(actualizadas);
+    setIndiceActual(actualizadas.length - 1);
+    e.target.value = null;
   };
 
-  // 3. Dar "Me gusta" a la imagen actual
   const darLike = () => {
     const nuevas = imagenes.map((img, index) => {
       if (index === indiceActual) {
@@ -74,68 +67,90 @@ export default function App() {
   const imagenActual = imagenes[indiceActual];
 
   return (
-    <div className="container">
-      <h1>Galería de Imágenes Dinámica</h1>
+    <div className="app-wrapper">
+      <header className="app-header">
+        <h1>Galería Interactiva</h1>
+        <p className="subtitle">Visualizador con gestión de imágenes y estados</p>
 
-      {/* Control para subir imágenes */}
-      <div className="upload-box">
-        <label htmlFor="file-upload" className="btn-upload">
-          Subir Imagen
-        </label>
-        <input
-          id="file-upload"
-          type="file"
-          accept="image/*"
-          onChange={subirImagen}
-          style={{ display: 'none' }}
-        />
-      </div>
-
-      {imagenes.length > 0 ? (
-        <div className="card">
-          <h3>{imagenActual.nombre}</h3>
-          
-          {/* Clic en la imagen abre el modal */}
-          <img
-            src={imagenActual.url}
-            alt={imagenActual.nombre}
-            className="main-image"
-            onClick={() => setModalAbierto(true)}
-            title="Haz clic para ver en pantalla completa"
+        <div className="upload-container">
+          <label htmlFor="file-upload" className="btn-upload">
+            <span className="icon">📁</span> Subir nueva imagen
+          </label>
+          <input
+            id="file-upload"
+            type="file"
+            accept="image/*"
+            onChange={subirImagen}
+            style={{ display: 'none' }}
           />
-
-          <div className="nav-controls">
-            <button onClick={anterior} disabled={indiceActual === 0}>
-              &lt; Anterior
-            </button>
-            <span>{indiceActual + 1} / {imagenes.length}</span>
-            <button onClick={siguiente} disabled={indiceActual === imagenes.length - 1}>
-              Siguiente &gt;
-            </button>
-          </div>
-
-          <div className="action-controls">
-            <button className="btn-like" onClick={darLike}>
-              Me gusta ({imagenActual.likes})
-            </button>
-            <button className="btn-delete" onClick={eliminarImagen}>
-              Eliminar
-            </button>
-          </div>
         </div>
-      ) : (
-        <p>No hay imágenes en la galería. ¡Sube una nueva!</p>
-      )}
+      </header>
 
-      {/* 4. Modal para ver la imagen en grande */}
+      <main className="gallery-layout">
+        {imagenes.length > 0 ? (
+          <div className="gallery-card">
+            <div className="card-top">
+              <span className="country-badge">{imagenActual.nombre}</span>
+              <span className="counter-pill">{indiceActual + 1} de {imagenes.length}</span>
+            </div>
+
+            <div className="image-viewport" onClick={() => setModalAbierto(true)} title="Clic para ampliar">
+              <img
+                src={imagenActual.url}
+                alt={imagenActual.nombre}
+                className="displayed-image"
+              />
+              <div className="zoom-hint">🔍 Ampliar</div>
+            </div>
+
+            <div className="nav-bar">
+              <button
+                className="btn-nav"
+                onClick={anterior}
+                disabled={indiceActual === 0}
+              >
+                ◀ Anterior
+              </button>
+              <button
+                className="btn-nav"
+                onClick={siguiente}
+                disabled={indiceActual === imagenes.length - 1}
+              >
+                Siguiente ▶
+              </button>
+            </div>
+
+            <div className="actions-bar">
+              <button className="btn-action btn-heart" onClick={darLike}>
+                ❤️ Me gusta <span className="like-counter">{imagenActual.likes}</span>
+              </button>
+              <button className="btn-action btn-trash" onClick={eliminarImagen}>
+                🗑️ Eliminar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="empty-card">
+            <p>No hay imágenes disponibles en la colección.</p>
+            <label htmlFor="file-upload" className="btn-upload empty-btn">
+              Sube la primera
+            </label>
+          </div>
+        )}
+      </main>
+
+      {/* Modal tipo pantalla completa */}
       {modalAbierto && imagenActual && (
-        <div className="modal-overlay" onClick={() => setModalAbierto(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <span className="close-btn" onClick={() => setModalAbierto(false)}>
+        <div className="modal-backdrop" onClick={() => setModalAbierto(false)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setModalAbierto(false)}>
               &times;
-            </span>
-            <img src={imagenActual.url} alt={imagenActual.nombre} className="modal-image" />
-            <p>{imagenActual.nombre} - {imagenActual.likes} Likes</p>
+            </button>
+            <img src={imagenActual.url} alt={imagenActual.nombre} className="modal-img-full" />
+            <div className="modal-info">
+              <h3>{imagenActual.nombre}</h3>
+              <p>❤️ {imagenActual.likes} Me gusta</p>
+            </div>
           </div>
         </div>
       )}
