@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
+import TodoList from './TodoList';
 
 export default function App() {
   const [imagenes, setImagenes] = useState([
@@ -138,6 +139,9 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* Sección To-Do List con LocalStorage */}
+      <TodoList />
 
       {/* Modal tipo pantalla completa */}
       {modalAbierto && imagenActual && (
